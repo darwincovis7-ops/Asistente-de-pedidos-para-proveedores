@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SendOrder Pro — Pedidos a proveedores</title>
+<style>
+:root{
+  --navy:#0b1f3a;--navy2:#12345b;--blue:#1677ff;--blue2:#eaf3ff;
+  --green:#16b364;--green2:#e8f8f0;--text:#172033;--muted:#6b778c;
+  --line:#e7ebf2;--bg:#f5f7fb;--white:#fff;--danger:#d92d20;
+  --shadow:0 10px 30px rgba(20,38,70,.08);--radius:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.status{padding:12px 14px;border-radius:12px;margin:12px 0;background:#eef2f7;color:#536176;white-space:pre-wrap;font-size:13px}
+.status.success{background:var(--green2);color:#087443}
+.status.error{background:#fff0ef;color:#a9231a}
+.status.warning{background:#fff6df;color:#8a5b00}
+
+.auth-shell{min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(135deg,#07182d,#12345b)}
+.auth-box{width:min(440px,100%);background:#fff;border-radius:24px;padding:34px;box-shadow:0 25px 70px rgba(0,0,0,.22)}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:22px;color:var(--navy)}
+.brand-mark{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#1683ff,#0b4fa8);color:#fff;font-size:22px;box-shadow:0 8px 20px rgba(22,119,255,.25)}
+.auth-box h1{margin:28px 0 8px;font-size:30px;letter-spacing:-.6px}
+.auth-box p{margin:0 0 24px;line-height:1.5}
+.field{margin:14px 0}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px;color:#3e4a5e}
+input,select{width:100%;padding:13px 14px;border:1px solid #dbe1ea;border-radius:12px;background:#fff;color:var(--text);outline:none;transition:.18s}
+input:focus,select:focus{border-color:#77adff;box-shadow:0 0 0 4px rgba(22,119,255,.10)}
+.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:750;transition:.18s}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--blue);color:#fff;box-shadow:0 7px 18px rgba(22,119,255,.2)}
+.btn-secondary{background:#eef2f7;color:#344054}
+.btn-whatsapp{background:var(--green);color:#fff;box-shadow:0 7px 18px rgba(22,179,100,.18)}
+.btn-danger{background:#fff0ef;color:var(--danger)}
+.btn-full{width:100%}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.auth-test{margin-top:10px}
+
+.app-shell{min-height:100vh;display:flex}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:245px;background:linear-gradient(180deg,#081b33,#0d294b);color:#fff;padding:22px 15px;display:flex;flex-direction:column;z-index:10}
+.sidebar .brand{color:#fff;padding:0 8px 25px}
+.sidebar .brand-mark{background:rgba(255,255,255,.12);box-shadow:none}
+.nav{display:grid;gap:5px}
+.nav button{width:100%;border:0;background:transparent;color:#b9c7d9;text-align:left;padding:12px 13px;border-radius:11px;font-weight:650}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.10);color:#fff}
+.nav-icon{display:inline-block;width:24px}
+.sidebar-bottom{margin-top:auto;padding-top:18px;border-top:1px solid rgba(255,255,255,.10)}
+.sidebar-bottom .btn{color:#dce7f5;background:rgba(255,255,255,.07);width:100%}
+
+.main{margin-left:245px;width:calc(100% - 245px);padding:24px 30px 50px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}
+.page-title h1{font-size:25px;margin:0 0 4px;letter-spacing:-.4px}
+.page-title p{margin:0;color:var(--muted);font-size:14px}
+.user-area{display:flex;align-items:center;gap:10px}
+.online{display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:99px;background:#fff;border:1px solid var(--line);font-size:12px;font-weight:700}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
+
+.content-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.8fr);gap:20px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:21px}
+.card h2{font-size:18px;margin:0 0 5px;letter-spacing:-.2px}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:17px}
+.card-sub{font-size:13px;color:var(--muted);margin:0}
+.section{margin-bottom:20px}
+.provider-list,.product-list{display:grid;gap:9px}
+.provider-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px;border:1px solid var(--line);border-radius:14px}
+.provider-left{display:flex;align-items:center;gap:12px;min-width:0}
+.avatar{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--blue2);color:var(--blue);font-weight:800}
+.provider-item b{display:block;margin-bottom:3px}
+.item-actions{display:flex;gap:7px;align-items:center}
+.item-actions button{width:auto;padding:8px 10px;border:0;border-radius:9px;font-size:12px;font-weight:700}
+.whatsapp-mini{background:var(--green2);color:#087443}
+
+.form-inline{display:grid;grid-template-columns:1fr 1fr auto;gap:9px}
+.form-inline .btn{width:auto}
+.product-admin{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.product-admin:last-child{border-bottom:0}
+.product-name{font-weight:700}.product-provider{font-size:12px;color:var(--muted);margin-top:3px}
+
+.order-card{position:sticky;top:24px}
+.order-step{display:flex;gap:9px;align-items:center;margin:14px 0 16px}
+.step-dot{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
+.order-products{margin-top:14px;max-height:410px;overflow:auto;padding-right:2px}
+.order-product{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.order-product:last-child{border-bottom:0}
+.qty-wrap{display:flex;align-items:center;gap:6px}
+.qty-wrap input{width:64px;text-align:center;padding:9px}
+.qty-label{font-size:12px;color:var(--muted)}
+.order-footer{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.preview{margin-top:16px;border-radius:14px;background:#f4f7fb;padding:14px;font-size:13px;line-height:1.55}
+.preview strong{color:var(--navy)}
+
+.mobile-menu{display:none}
+.empty{padding:18px;border:1px dashed #d6dde8;border-radius:13px;text-align:center;color:var(--muted);font-size:13px}
+#globalStatus{margin-bottom:18px}
+
+@media(max-width:900px){
+  .sidebar{width:205px}.main{margin-left:205px;width:calc(100% - 205px);padding:20px}
+  .content-grid{grid-template-columns:1fr}.order-card{position:static}
+  .form-inline{grid-template-columns:1fr 1fr}.form-inline .btn{grid-column:1/-1}
+}
+@media(max-width:680px){
+  .sidebar{display:none}.main{margin-left:0;width:100%;padding:14px 12px 90px}
+  .mobile-menu{display:flex;position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);z-index:20;padding:7px;justify-content:space-around;box-shadow:0 -8px 25px rgba(20,38,70,.08)}
+  .mobile-menu button{border:0;background:transparent;color:#667085;font-size:11px;font-weight:700;padding:7px 9px}.mobile-menu button.active{color:var(--blue)}
+  .topbar{align-items:flex-start}.user-area .online{display:none}
+  .user-area .btn{padding:9px 10px}
+  .content-grid{display:block}.right-col{margin-top:16px}
+  .form-inline{grid-template-columns:1fr}.form-inline .btn{grid-column:auto}
+  .card{padding:17px}.provider-item{padding:12px}.item-actions .whatsapp-mini{display:none}
+  .btn-row{grid-template-columns:1fr}.auth-box{padding:25px}
+}
+</style>
+</head>
+<body>
+<div id="authCard" class="auth-shell">
+  <div class="auth-box">
+    <div class="brand"><div class="brand-mark">➤</div><span>SendOrder Pro</span></div>
+    <h1>Pedidos a proveedores</h1>
+    <p class="muted">Selecciona un proveedor, arma tu pedido y envíalo directamente por WhatsApp.</p>
+    <div class="field"><label>Correo electrónico</label><input id="email" type="email" autocomplete="email" placeholder="correo@ejemplo.com"></div>
+    <div class="field"><label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="Mínimo 6 caracteres"></div>
+    <div class="btn-row">
+      <button id="loginBtn" class="btn btn-primary">Iniciar sesión</button>
+      <button id="signupBtn" class="btn btn-secondary">Crear cuenta</button>
+    </div>
+    <button id="testBtn" class="btn btn-secondary btn-full auth-test">Probar conexión</button>
+    <div id="authStatus" class="status hidden"></div>
+  </div>
+</div>
+
+<div id="appCard" class="app-shell hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">➤</div><span>SendOrder Pro</span></div>
+    <nav class="nav">
+      <button class="active"><span class="nav-icon">⌂</span> Inicio</button>
+      <button><span class="nav-icon">▣</span> Proveedores</button>
+      <button><span class="nav-icon">□</span> Productos</button>
+      <button><span class="nav-icon">✎</span> Nuevo pedido</button>
+      <button><span class="nav-icon">◷</span> Historial</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button id="logoutBtn" class="btn btn-secondary">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="page-title">
+        <h1 id="businessTitle">Mi negocio</h1>
+        <p>Gestiona tus pedidos a proveedores</p>
+      </div>
+      <div class="user-area">
+        <div class="online"><span class="dot"></span> Conectado</div>
+        <button class="btn btn-secondary" onclick="document.getElementById('logoutBtn').click()">Salir</button>
+      </div>
+    </div>
+
+    <div id="globalStatus" class="status">Iniciando aplicación...</div>
+
+    <div class="content-grid">
+      <div class="left-col">
+        <section class="card section">
+          <div class="card-head">
+            <div><div class="card-sub">Paso 1</div><h2>Proveedores</h2><p class="card-sub">Cada proveedor tiene sus propios productos y WhatsApp.</p></div>
+          </div>
+          <div class="form-inline">
+            <input id="supplierName" placeholder="Nombre del proveedor">
+            <input id="supplierWhatsapp" placeholder="WhatsApp, ej. 573001234567">
+            <button id="addSupplierBtn" class="btn btn-primary">+ Agregar proveedor</button>
+          </div>
+          <div id="suppliersList" class="provider-list" style="margin-top:14px"></div>
+        </section>
+
+        <section class="card section">
+          <div class="card-head">
+            <div><div class="card-sub">Catálogo</div><h2>Productos</h2><p class="card-sub">Asocia cada producto al proveedor que lo maneja.</p></div>
+          </div>
+          <div class="form-inline" style="grid-template-columns:220px 1fr auto">
+            <select id="productSupplier"><option value="">Selecciona proveedor</option></select>
+            <input id="productName" placeholder="Nombre del producto">
+            <button id="addProductBtn" class="btn btn-primary">+ Agregar producto</button>
+          </div>
+          <div id="productsList" class="product-list" style="margin-top:10px"></div>
+        </section>
+      </div>
+
+      <div class="right-col">
+        <section class="card order-card">
+          <div class="card-head">
+            <div><div class="card-sub">Paso 2</div><h2>Nuevo pedido</h2><p class="card-sub">Elige proveedor y cantidades.</p></div>
+          </div>
+          <div class="order-step"><div class="step-dot">1</div><div><b>Selecciona el proveedor</b><div class="qty-label">Solo verás sus productos</div></div></div>
+          <select id="orderSupplier"><option value="">Selecciona proveedor</option></select>
+          <div class="order-step"><div class="step-dot">2</div><div><b>Indica las cantidades</b><div class="qty-label">Los productos en 0 no se enviarán</div></div></div>
+          <div id="orderProducts" class="order-products"></div>
+          <div class="order-footer">
+            <div class="preview"><strong>¿Listo para enviar?</strong><br>Se guardará el pedido y se abrirá WhatsApp con los productos seleccionados.</div>
+            <button id="createOrderBtn" class="btn btn-whatsapp btn-full" style="margin-top:12px">● Enviar pedido por WhatsApp</button>
+            <div id="orderStatus" class="status hidden"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="mobile-menu">
+  <button class="active">⌂<br>Inicio</button>
+  <button>▣<br>Proveedores</button>
+  <button>□<br>Productos</button>
+  <button>✎<br>Pedido</button>
+  <button>◷<br>Historial</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  'use strict';
+
+  var SUPABASE_URL = 'https://uiifvaovrnjejuljnkrh.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_6rhG4vKZDHw6YRXUkwoU8w_CaOsutAi';
+  var sb = null;
+  var session = null;
+  var business = null;
+  var suppliers = [];
+  var products = [];
+
+  function $(id){ return document.getElementById(id); }
+  function show(el,msg,type){
+    if(!el)return;
+    el.textContent=msg||'';
+    el.className='status'+(type?' '+type:'');
+    el.classList.remove('hidden');
+  }
+  function hide(el){ if(el)el.classList.add('hidden'); }
+  function global(msg,type){ show($('globalStatus'),msg,type); }
+  function authMsg(msg,type){ show($('authStatus'),msg,type); }
+  function orderMsg(msg,type){ show($('orderStatus'),msg,type); }
+  function errText(error){
+    if(!error)return 'Error desconocido.';
+    return (error.message||error.error_description||error.msg||String(error));
+  }
+  function normalizePhone(v){ return String(v||'').replace(/[^0-9]/g,''); }
+  function escapeHtml(v){
+    return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c];});
+  }
+
+  function init(){
+    if(!window.supabase || !window.supabase.createClient){
+      global('No se pudo cargar Supabase desde el CDN. Revisa tu conexión a Internet y vuelve a cargar la página.','error');
+      $('loginBtn').disabled=true;$('signupBtn').disabled=true;
+      return;
+    }
+    try{
+      sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+      global('Supabase cargado correctamente. Puedes iniciar sesión o crear una cuenta.','success');
+      bindEvents();
+      restoreSession();
+    }catch(e){
+      global('Error al iniciar Supabase: '+errText(e),'error');
+    }
+  }
+
+  function bindEvents(){
+    $('signupBtn').addEventListener('click',signup);
+    $('loginBtn').addEventListener('click',login);
+    $('testBtn').addEventListener('click',testConnection);
+    $('logoutBtn').addEventListener('click',logout);
+    $('addSupplierBtn').addEventListener('click',addSupplier);
+    $('addProductBtn').addEventListener('click',addProduct);
+    $('productSupplier').addEventListener('change',renderProducts);
+    $('orderSupplier').addEventListener('change',renderOrderProducts);
+    $('createOrderBtn').addEventListener('click',createOrder);
+  }
+
+  async function restoreSession(){
+    try{
+      var r=await sb.auth.getSession();
+      if(r.error){global('No se pudo comprobar la sesión: '+errText(r.error),'error');return;}
+      if(r.data && r.data.session){
+        session=r.data.session;
+        await enterApp();
+      }else{
+        showAuth();
+      }
+    }catch(e){global('Error comprobando sesión: '+errText(e),'error');}
+    sb.auth.onAuthStateChange(function(event,newSession){
+      session=newSession;
+      if(newSession && event==='SIGNED_IN') enterApp();
+      if(!newSession && event==='SIGNED_OUT') showAuth();
+    });
+  }
+
+  function showAuth(){
+    $('authCard').classList.remove('hidden');
+    $('appCard').classList.add('hidden');
+  }
+  function showApp(){
+    $('authCard').classList.add('hidden');
+    $('appCard').classList.remove('hidden');
+  }
+
+  async function signup(){
+    var email=$('email').value.trim();
+    var password=$('password').value;
+    if(!email || !password){authMsg('Escribe el correo y la contraseña.','warning');return;}
+    if(password.length<6){authMsg('La contraseña debe tener al menos 6 caracteres.','warning');return;}
+    var btn=$('signupBtn');btn.disabled=true;btn.textContent='Creando cuenta...';
+    authMsg('Conectando con Supabase...');
+    try{
+      var r=await sb.auth.signUp({email:email,password:password});
+      if(r.error){authMsg('Supabase rechazó la creación de la cuenta:\n'+errText(r.error),'error');return;}
+      if(r.data && r.data.session){
+        authMsg('Cuenta creada correctamente. Entrando...','success');
+        session=r.data.session;
+        await enterApp();
+      }else{
+        authMsg('La cuenta fue creada, pero Supabase requiere confirmar el correo. Revisa tu bandeja de entrada y luego inicia sesión.','success');
+      }
+    }catch(e){authMsg('Error inesperado al crear la cuenta:\n'+errText(e),'error');}
+    finally{btn.disabled=false;btn.textContent='Crear cuenta';}
+  }
+
+  async function login(){
+    var email=$('email').value.trim();
+    var password=$('password').value;
+    if(!email || !password){authMsg('Escribe el correo y la contraseña.','warning');return;}
+    var btn=$('loginBtn');btn.disabled=true;btn.textContent='Entrando...';
+    authMsg('Iniciando sesión...');
+    try{
+      var r=await sb.auth.signInWithPassword({email:email,password:password});
+      if(r.error){authMsg('No se pudo iniciar sesión:\n'+errText(r.error),'error');return;}
+      session=r.data.session;
+      authMsg('Sesión iniciada.','success');
+      await enterApp();
+    }catch(e){authMsg('Error inesperado al iniciar sesión:\n'+errText(e),'error');}
+    finally{btn.disabled=false;btn.textContent='Iniciar sesión';}
+  }
+
+  async function testConnection(){
+    if(!sb){authMsg('Supabase todavía no está cargado.','error');return;}
+    var btn=$('testBtn');btn.disabled=true;btn.textContent='Probando...';
+    try{
+      var r=await sb.auth.getSession();
+      if(r.error) authMsg('Conexión recibida, pero Supabase respondió con error:\n'+errText(r.error),'error');
+      else authMsg('Conexión con Supabase funcionando correctamente.\nEl proyecto responde y la librería está activa.','success');
+    }catch(e){authMsg('No se pudo contactar Supabase:\n'+errText(e),'error');}
+    finally{btn.disabled=false;btn.textContent='Probar conexión con Supabase';}
+  }
+
+  async function logout(){
+    try{await sb.auth.signOut();}catch(e){global('Error cerrando sesión: '+errText(e),'error');}
+  }
+
+  async function enterApp(){
+    if(!session || !session.user){showAuth();return;}
+    showApp();
+    $('userInfo').textContent='Usuario: '+session.user.email;
+    global('Sesión activa. Cargando datos...','success');
+    await ensureBusiness();
+    await loadData();
+  }
+
+  async function ensureBusiness(){
+    try{
+      var r=await sb.from('businesses').select('*').eq('owner_id',session.user.id).limit(1);
+      if(r.error){
+        global('La cuenta funciona, pero no pude consultar la tabla businesses.\n'+errText(r.error)+'\n\nRevisa las políticas RLS y las columnas de esa tabla.','error');
+        return;
+      }
+      if(r.data && r.data.length){business=r.data[0];$('businessTitle').textContent=business.name||'Mi negocio';return;}
+      var ins=await sb.from('businesses').insert({owner_id:session.user.id,name:'Mi negocio'}).select().single();
+      if(ins.error){
+        global('La cuenta funciona, pero no pude crear tu negocio en businesses.\n'+errText(ins.error)+'\n\nLa autenticación ya está funcionando; este es un problema separado de la tabla businesses/RLS.','error');
+        return;
+      }
+      business=ins.data;
+      $('businessTitle').textContent=business.name||'Mi negocio';
+    }catch(e){global('Error con businesses: '+errText(e),'error');}
+  }
+
+  async function loadData(){
+    if(!business || !business.id){
+      renderAll();return;
+    }
+    try{
+      var s=await sb.from('suppliers').select('*').eq('business_id',business.id).order('name');
+      if(s.error){global('Error cargando proveedores:\n'+errText(s.error),'error');return;}
+      suppliers=s.data||[];
+      var p=await sb.from('products').select('*').eq('business_id',business.id).order('name');
+      if(p.error){global('Error cargando productos:\n'+errText(p.error),'error');return;}
+      products=p.data||[];
+      renderAll();
+      global('Datos cargados correctamente.','success');
+    }catch(e){global('Error cargando datos: '+errText(e),'error');}
+  }
+
+  function renderAll(){
+    renderSuppliers();renderSupplierSelects();renderProducts();renderOrderProducts();
+  }
+
+  function renderSuppliers(){
+    var el=$('suppliersList');
+    if(!suppliers.length){el.innerHTML='<p class="muted">Todavía no tienes proveedores.</p>';return;}
+    el.innerHTML=suppliers.map(function(s){return '<div class="item"><b>'+escapeHtml(s.name)+'</b><br><span class="muted">WhatsApp: '+escapeHtml(s.whatsapp||'No registrado')+'</span></div>';}).join('');
+  }
+
+  function renderSupplierSelects(){
+    var options='<option value="">Selecciona proveedor</option>'+suppliers.map(function(s){return '<option value="'+escapeHtml(s.id)+'">'+escapeHtml(s.name)+'</option>';}).join('');
+    $('productSupplier').innerHTML=options;
+    $('orderSupplier').innerHTML=options;
+  }
+
+  function renderProducts(){
+    var selected=$('productSupplier').value;
+    var list=selected?products.filter(function(p){return String(p.supplier_id)===String(selected);}):products;
+    var el=$('productsList');
+    if(!list.length){el.innerHTML='<p class="muted">No hay productos para mostrar.</p>';return;}
+    el.innerHTML=list.map(function(p){return '<div class="item"><b>'+escapeHtml(p.name)+'</b><br><span class="muted">Proveedor: '+escapeHtml((suppliers.find(function(s){return String(s.id)===String(p.supplier_id);})||{}).name||'')+'</span></div>';}).join('');
+  }
+
+  function renderOrderProducts(){
+    var supplierId=$('orderSupplier').value;
+    var el=$('orderProducts');
+    if(!supplierId){el.innerHTML='<p class="muted">Selecciona un proveedor para ver sus productos.</p>';return;}
+    var list=products.filter(function(p){return String(p.supplier_id)===String(supplierId);});
+    if(!list.length){el.innerHTML='<p class="muted">Este proveedor no tiene productos.</p>';return;}
+    el.innerHTML=list.map(function(p){return '<div class="item"><b>'+escapeHtml(p.name)+'</b><br><input class="qty" type="number" min="0" step="1" value="0" data-product-id="'+escapeHtml(p.id)+'"> cantidad</div>';}).join('');
+  }
+
+  async function addSupplier(){
+    if(!business){global('Primero debe estar creada la información del negocio.','warning');return;}
+    var name=$('supplierName').value.trim();
+    var whatsapp=normalizePhone($('supplierWhatsapp').value);
+    if(!name){global('Escribe el nombre del proveedor.','warning');return;}
+    var btn=$('addSupplierBtn');btn.disabled=true;
+    try{
+      var r=await sb.from('suppliers').insert({business_id:business.id,name:name,whatsapp:whatsapp}).select().single();
+      if(r.error){global('No se pudo guardar el proveedor:\n'+errText(r.error),'error');return;}
+      suppliers.push(r.data);$('supplierName').value='';$('supplierWhatsapp').value='';renderAll();global('Proveedor agregado.','success');
+    }catch(e){global('Error agregando proveedor: '+errText(e),'error');}
+    finally{btn.disabled=false;}
+  }
+
+  async function addProduct(){
+    if(!business){global('Primero debe estar creada la información del negocio.','warning');return;}
+    var supplierId=$('productSupplier').value;
+    var name=$('productName').value.trim();
+    if(!supplierId || !name){global('Selecciona proveedor y escribe el nombre del producto.','warning');return;}
+    var btn=$('addProductBtn');btn.disabled=true;
+    try{
+      var r=await sb.from('products').insert({business_id:business.id,supplier_id:supplierId,name:name}).select().single();
+      if(r.error){global('No se pudo guardar el producto:\n'+errText(r.error),'error');return;}
+      products.push(r.data);$('productName').value='';renderAll();global('Producto agregado.','success');
+    }catch(e){global('Error agregando producto: '+errText(e),'error');}
+    finally{btn.disabled=false;}
+  }
+
+  async function createOrder(){
+    if(!business){orderMsg('No hay negocio activo.','error');return;}
+    var supplierId=$('orderSupplier').value;
+    if(!supplierId){orderMsg('Selecciona un proveedor.','warning');return;}
+    var inputs=document.querySelectorAll('#orderProducts input[data-product-id]');
+    var items=[];
+    inputs.forEach(function(input){
+      var q=parseInt(input.value,10)||0;
+      if(q>0){
+        var p=products.find(function(x){return String(x.id)===String(input.getAttribute('data-product-id'));});
+        if(p)items.push({product:p,quantity:q});
+      }
+    });
+    if(!items.length){orderMsg('Todos los productos están en 0. Solo se envían productos con cantidad mayor que 0.','warning');return;}
+    var supplier=suppliers.find(function(s){return String(s.id)===String(supplierId);});
+    var btn=$('createOrderBtn');btn.disabled=true;btn.textContent='Guardando pedido...';
+    try{
+      var o=await sb.from('orders').insert({business_id:business.id,supplier_id:supplierId}).select().single();
+      if(o.error){orderMsg('No se pudo crear el pedido:\n'+errText(o.error),'error');return;}
+      var rows=items.map(function(i){return {order_id:o.data.id,product_id:i.product.id,product_name:i.product.name,quantity:i.quantity};});
+      var oi=await sb.from('order_items').insert(rows);
+      if(oi.error){orderMsg('El pedido fue creado, pero falló el detalle:\n'+errText(oi.error),'error');return;}
+      var lines=['Pedido de productos',''];
+      items.forEach(function(i){lines.push(i.quantity+' x '+i.product.name);});
+      var phone=normalizePhone(supplier && supplier.whatsapp);
+      var textMsg=encodeURIComponent(lines.join('\n'));
+      var url=phone?'https://wa.me/'+phone+'?text='+textMsg:'https://wa.me/?text='+textMsg;
+      orderMsg('Pedido guardado correctamente. Se abrirá WhatsApp con solo los productos cuya cantidad es mayor que 0.','success');
+      window.open(url,'_blank');
+      inputs.forEach(function(input){input.value='0';});
+    }catch(e){orderMsg('Error creando pedido:\n'+errText(e),'error');}
+    finally{btn.disabled=false;btn.textContent='Crear pedido y preparar WhatsApp';}
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+</body>
+
+</body>
+</html>
